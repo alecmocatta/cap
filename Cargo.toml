@@ -1,5 +1,5 @@
 [package]
-name = "template-rust"
+name = "cap"
 version = "0.1.0"
 license = "MIT OR Apache-2.0"
 authors = ["Alec Mocatta <alec@mocatta.net>"]
@@ -8,14 +8,14 @@ keywords = []
 description = """
 A template Rust library crate.
 """
-repository = "https://github.com/alecmocatta/template-rust"
-homepage = "https://github.com/alecmocatta/template-rust"
-documentation = "https://docs.rs/template-rust/0.1.0"
+repository = "https://github.com/alecmocatta/cap"
+homepage = "https://github.com/alecmocatta/cap"
+documentation = "https://docs.rs/cap/0.1.0"
 readme = "README.md"
 edition = "2018"
 
 [badges]
-azure-devops = { project = "alecmocatta/template-rust", pipeline = "tests" }
+azure-devops = { project = "alecmocatta/cap", pipeline = "tests" }
 maintenance = { status = "passively-maintained" }
 
 [dependencies]
