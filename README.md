@@ -1,26 +1,33 @@
-# template-rust
+# cap
 
-[![Crates.io](https://img.shields.io/crates/v/template-rust.svg?maxAge=86400)](https://crates.io/crates/template-rust)
-[![MIT / Apache 2.0 licensed](https://img.shields.io/crates/l/template-rust.svg?maxAge=2592000)](#License)
-[![Build Status](https://dev.azure.com/alecmocatta/template-rust/_apis/build/status/tests?branchName=master)](https://dev.azure.com/alecmocatta/template-rust/_build/latest?branchName=master)
+[![Crates.io](https://img.shields.io/crates/v/cap.svg?maxAge=86400)](https://crates.io/crates/cap)
+[![MIT / Apache 2.0 licensed](https://img.shields.io/crates/l/cap.svg?maxAge=2592000)](#License)
+[![Build Status](https://dev.azure.com/alecmocatta/cap/_apis/build/status/tests?branchName=master)](https://dev.azure.com/alecmocatta/cap/_build/latest?branchName=master)
 
-[Docs](https://docs.rs/template-rust/0.1.0)
+[Docs](https://docs.rs/cap/0.1.0)
 
-A template Rust library crate.
+An allocator that can track and limit memory usage.
 
-This is template for Rust libraries, comprising a [`hello_world()`](https://docs.rs/template-rust/0.1.0/template_rust/fn.hello_world.html) function.
+This crate provides a generic allocator that wraps another allocator, tracking memory usage and enabling limits to be set.
 
 ## Example
 
+It can be used by declaring a static and marking it with the `#[global_allocator]` attribute:
+
 ```rust
-use template_rust::hello_world;
+use std::alloc;
+use cap::Cap;
 
-hello_world();
+#[global_allocator]
+static ALLOCATOR: Cap<alloc::System> = Cap::new(alloc::System, usize::max_value());
+
+fn main() {
+    // Set the limit to 30MiB.
+    ALLOCATOR.set_limit(30 * 1024 * 1024).unwrap();
+    // ...
+    println!("Currently allocated: {}B", ALLOCATOR.allocated());
+}
 ```
-
-## Note
-
-Caveat emptor.
 
 ## License
 Licensed under either of

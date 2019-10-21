@@ -1,21 +1,26 @@
 [package]
-name = "template-rust"
+name = "cap"
 version = "0.1.0"
 license = "MIT OR Apache-2.0"
 authors = ["Alec Mocatta <alec@mocatta.net>"]
 categories = []
 keywords = []
 description = """
-A template Rust library crate.
+An allocator that can track and limit memory usage.
+
+This crate provides a generic allocator that wraps another allocator, tracking memory usage and enabling limits to be set.
 """
-repository = "https://github.com/alecmocatta/template-rust"
-homepage = "https://github.com/alecmocatta/template-rust"
-documentation = "https://docs.rs/template-rust/0.1.0"
+repository = "https://github.com/alecmocatta/cap"
+homepage = "https://github.com/alecmocatta/cap"
+documentation = "https://docs.rs/cap/0.1.0"
 readme = "README.md"
 edition = "2018"
 
 [badges]
-azure-devops = { project = "alecmocatta/template-rust", pipeline = "tests" }
+azure-devops = { project = "alecmocatta/cap", pipeline = "tests" }
 maintenance = { status = "passively-maintained" }
+
+[features]
+nightly = []
 
 [dependencies]
