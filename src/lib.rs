@@ -1,24 +1,35 @@
-//! A template Rust library crate.
+//! An allocator that can track and limit memory usage.
 //!
 //! **[Crates.io](https://crates.io/crates/cap) │ [Repo](https://github.com/alecmocatta/cap)**
 //!
-//! This is template for Rust libraries, comprising a [`hello_world()`] function.
+//! This crate provides a generic allocator that wraps another allocator, tracking memory usage and enabling limits to be set.
 //!
 //! # Example
 //!
+//! It can be used by declaring a static and marking it with the `#[global_allocator]` attribute:
+//!
 //! ```
-//! //use template_rust::hello_world;
+//! use std::alloc;
+//! use cap::Cap;
 //!
-//! //hello_world();
-//! // prints: Hello, world!
+//! #[global_allocator]
+//! static ALLOCATOR: Cap<alloc::System> = Cap::new(alloc::System, usize::max_value());
+//!
+//! fn main() {
+//!     // Set the limit to 30MiB.
+//!     ALLOCATOR.set_limit(30 * 1024 * 1024).unwrap();
+//!     // ...
+//!     println!("Currently allocated: {}B", ALLOCATOR.allocated());
+//! }
 //! ```
-//!
-//! # Note
-//!
-//! Caveat emptor.
 
 #![doc(html_root_url = "https://docs.rs/cap/0.1.0")]
 #![cfg_attr(feature = "nightly", feature(allocator_api))]
+#![cfg_attr(
+	all(test, feature = "nightly"),
+	feature(try_reserve, test, custom_test_frameworks)
+)]
+#![cfg_attr(all(test, feature = "nightly"), test_runner(tests::runner))]
 #![warn(
 	missing_copy_implementations,
 	missing_debug_implementations,
@@ -47,7 +58,9 @@ pub struct Cap<H> {
 }
 
 impl<H> Cap<H> {
-	/// fn
+	/// Create a new allocator, wrapping the supplied allocator and enforcing the specified limit.
+	///
+	/// For no limit, simply set the limit to the theoretical maximum `usize::max_value()`.
 	pub const fn new(allocator: H, limit: usize) -> Self {
 		Self {
 			allocator,
@@ -55,15 +68,24 @@ impl<H> Cap<H> {
 			limit: AtomicUsize::new(limit),
 		}
 	}
-	/// remaining
+
+	/// Return the number of bytes remaining within the limit.
+	///
+	/// i.e. `limit - allocated`
 	pub fn remaining(&self) -> usize {
 		self.remaining.load(Ordering::Relaxed)
 	}
-	/// limit
+
+	/// Return the limit in bytes.
 	pub fn limit(&self) -> usize {
 		self.limit.load(Ordering::Relaxed)
 	}
-	/// ab
+
+	/// Set the limit in bytes.
+	///
+	/// For no limit, simply set the limit to the theoretical maximum `usize::max_value()`.
+	///
+	/// This method will return `Err` if the specified limit is less than the number of bytes already allocated.
 	pub fn set_limit(&self, limit: usize) -> Result<(), ()> {
 		loop {
 			let limit_old = self.limit.load(Ordering::Relaxed);
@@ -98,6 +120,19 @@ impl<H> Cap<H> {
 					.fetch_add(limit - limit_old, Ordering::Relaxed);
 			}
 			break Ok(());
+		}
+	}
+
+	/// Return the number of bytes allocated. Always less than the limit.
+	pub fn allocated(&self) -> usize {
+		// Make reasonable effort to get valid output
+		loop {
+			let limit_old = self.limit.load(Ordering::SeqCst);
+			let remaining = self.remaining.load(Ordering::SeqCst);
+			let limit = self.limit.load(Ordering::SeqCst);
+			if limit_old == limit && limit >= remaining {
+				break limit - remaining;
+			}
 		}
 	}
 }
@@ -281,17 +316,33 @@ where
 
 #[cfg(test)]
 mod tests {
+	#[cfg(all(test, feature = "nightly"))]
+	extern crate test;
+	#[cfg(all(test, feature = "nightly"))]
+	use std::collections::TryReserveError;
 	use std::{alloc, thread};
+	#[cfg(all(test, feature = "nightly"))]
+	use test::{TestDescAndFn, TestFn};
 
 	use super::Cap;
 
 	#[global_allocator]
 	static A: Cap<alloc::System> = Cap::new(alloc::System, usize::max_value());
 
+	#[cfg(all(test, feature = "nightly"))]
+	pub fn runner(tests: &[&TestDescAndFn]) {
+		for test in tests {
+			if let TestFn::StaticTestFn(test_fn) = test.testfn {
+				test_fn();
+			} else {
+				unimplemented!();
+			}
+		}
+	}
+
 	#[test]
-	fn succeeds() {
-		std::thread::sleep(std::time::Duration::from_secs(1));
-		let used = A.limit() - A.remaining();
+	fn concurrent() {
+		let allocated = A.allocated();
 		for _ in 0..100 {
 			let threads = (0..100)
 				.map(|_| {
@@ -306,8 +357,27 @@ mod tests {
 			threads
 				.into_iter()
 				.for_each(|thread| thread.join().unwrap());
-			let used2 = A.limit() - A.remaining();
-			assert_eq!(used, used2);
+			let allocated2 = A.allocated();
+			if cfg!(all(test, feature = "nightly")) {
+				assert_eq!(allocated, allocated2);
+			}
+		}
+	}
+
+	#[cfg(all(test, feature = "nightly"))]
+	#[test]
+	fn limit() {
+		A.set_limit(A.allocated() + 30 * 1024 * 1024).unwrap();
+		for _ in 0..10 {
+			let mut vec = Vec::<u8>::with_capacity(0);
+			if let Err(TryReserveError::AllocError { .. }) =
+				vec.try_reserve_exact(30 * 1024 * 1024 + 1)
+			{
+			} else {
+				A.set_limit(usize::max_value()).unwrap();
+				panic!("{}", A.remaining())
+			};
+			assert_eq!(vec.try_reserve_exact(30 * 1024 * 1024), Ok(()));
 		}
 	}
 }

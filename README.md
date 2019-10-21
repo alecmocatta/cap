@@ -6,21 +6,28 @@
 
 [Docs](https://docs.rs/cap/0.1.0)
 
-A template Rust library crate.
+An allocator that can track and limit memory usage.
 
-This is template for Rust libraries, comprising a [`hello_world()`](https://docs.rs/cap/0.1.0/cap/fn.hello_world.html) function.
+This crate provides a generic allocator that wraps another allocator, tracking memory usage and enabling limits to be set.
 
 ## Example
 
+It can be used by declaring a static and marking it with the `#[global_allocator]` attribute:
+
 ```rust
-// use cap::hello_world;
+use std::alloc;
+use cap::Cap;
 
-// hello_world();
+#[global_allocator]
+static ALLOCATOR: Cap<alloc::System> = Cap::new(alloc::System, usize::max_value());
+
+fn main() {
+    // Set the limit to 30MiB.
+    ALLOCATOR.set_limit(30 * 1024 * 1024).unwrap();
+    // ...
+    println!("Currently allocated: {}B", ALLOCATOR.allocated());
+}
 ```
-
-## Note
-
-Caveat emptor.
 
 ## License
 Licensed under either of

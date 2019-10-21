@@ -6,7 +6,9 @@ authors = ["Alec Mocatta <alec@mocatta.net>"]
 categories = []
 keywords = []
 description = """
-A template Rust library crate.
+An allocator that can track and limit memory usage.
+
+This crate provides a generic allocator that wraps another allocator, tracking memory usage and enabling limits to be set.
 """
 repository = "https://github.com/alecmocatta/cap"
 homepage = "https://github.com/alecmocatta/cap"
