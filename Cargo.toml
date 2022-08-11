@@ -15,6 +15,7 @@ homepage = "https://github.com/alecmocatta/cap"
 documentation = "https://docs.rs/cap/0.1.0"
 readme = "README.md"
 edition = "2018"
+exclude = ["/azure-pipelines.yml"]
 
 [badges]
 azure-devops = { project = "alecmocatta/cap", pipeline = "tests" }
