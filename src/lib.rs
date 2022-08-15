@@ -23,7 +23,6 @@
 //! }
 //! ```
 
-#![doc(html_root_url = "https://docs.rs/cap/0.1.0")]
 #![cfg_attr(feature = "nightly", feature(allocator_api))]
 #![cfg_attr(
 	all(test, feature = "nightly"),

@@ -4,7 +4,7 @@
 [![MIT / Apache 2.0 licensed](https://img.shields.io/crates/l/cap.svg?maxAge=2592000)](#License)
 [![Build Status](https://dev.azure.com/alecmocatta/cap/_apis/build/status/tests?branchName=master)](https://dev.azure.com/alecmocatta/cap/_build/latest?branchName=master)
 
-[Docs](https://docs.rs/cap/0.1.0)
+[Docs](https://docs.rs/cap/0.1)
 
 An allocator that can track and limit memory usage.
 
