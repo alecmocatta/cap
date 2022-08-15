@@ -1,6 +1,6 @@
 [package]
 name = "cap"
-version = "0.1.0"
+version = "0.1.1"
 license = "MIT OR Apache-2.0"
 authors = ["Alec Mocatta <alec@mocatta.net>"]
 categories = []
@@ -12,7 +12,7 @@ This crate provides a generic allocator that wraps another allocator, tracking m
 """
 repository = "https://github.com/alecmocatta/cap"
 homepage = "https://github.com/alecmocatta/cap"
-documentation = "https://docs.rs/cap/0.1.0"
+documentation = "https://docs.rs/cap"
 readme = "README.md"
 edition = "2018"
 exclude = ["/azure-pipelines.yml"]
