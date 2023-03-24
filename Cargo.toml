@@ -23,5 +23,6 @@ maintenance = { status = "passively-maintained" }
 
 [features]
 nightly = []
+stats = []
 
 [dependencies]
