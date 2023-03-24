@@ -405,12 +405,15 @@ mod tests {
 				.into_iter()
 				.for_each(|thread| thread.join().unwrap());
 			let allocated2 = A.allocated();
+			#[cfg(feature = "stats")]
 			let total_allocated = A.total_allocated();
 			if cfg!(all(test, feature = "nightly")) {
 				assert_eq!(allocated, allocated2);
+				#[cfg(feature = "stats")]
 				assert!(total_allocated >= allocated);
 			}
 		}
+		#[cfg(feature = "stats")]
 		assert!(A.max_allocated() < A.total_allocated());
 	}
 
@@ -434,7 +437,9 @@ mod tests {
 			assert!(vec2.try_reserve_exact(1).is_err());
 		}
 		// Might have additional allocations of errors and what not along the way.
+		#[cfg(feature = "stats")]
 		assert!(A.total_allocated() >= initial + 10 * allocate_amount);
+		#[cfg(feature = "stats")]
 		assert_eq!(A.max_allocated(), initial + allocate_amount)
 	}
 
