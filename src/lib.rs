@@ -161,7 +161,9 @@ impl<H> Cap<H> {
 		// If max_allocated is less than currently allocated, then it will be updated to limit - remaining.
 		// Otherwise, it will remain unchanged.
 		#[cfg(feature = "stats")]
-		let _ = self.max_allocated.fetch_max(self.allocated(), Ordering::Relaxed);
+		let _ = self
+			.max_allocated
+			.fetch_max(self.allocated(), Ordering::Relaxed);
 	}
 }
 
@@ -298,7 +300,7 @@ where
 			}
 			res
 		};
-		if res.is_ok() { 
+		if res.is_ok() {
 			self.update_stats(new_size);
 		}
 		res
@@ -425,9 +427,7 @@ mod tests {
 		A.set_limit(A.allocated() + allocate_amount).unwrap();
 		for _ in 0..10 {
 			let mut vec = Vec::<u8>::with_capacity(0);
-			if let Err(e) =
-				vec.try_reserve_exact(allocate_amount + 1)
-			{
+			if let Err(e) = vec.try_reserve_exact(allocate_amount + 1) {
 			} else {
 				A.set_limit(usize::max_value()).unwrap();
 				panic!("{}", A.remaining())
