@@ -1,6 +1,6 @@
 [package]
 name = "cap"
-version = "0.1.1"
+version = "0.1.2"
 license = "MIT OR Apache-2.0"
 authors = ["Alec Mocatta <alec@mocatta.net>"]
 categories = []
@@ -23,5 +23,6 @@ maintenance = { status = "passively-maintained" }
 
 [features]
 nightly = []
+stats = []
 
 [dependencies]
