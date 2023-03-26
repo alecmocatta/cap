@@ -40,7 +40,11 @@
 	unused_results,
 	clippy::pedantic
 )] // from https://github.com/rust-unofficial/patterns/blob/master/anti_patterns/deny-warnings.md
-#![allow()]
+#![allow(
+	clippy::result_unit_err,
+	clippy::let_underscore_untyped,
+	clippy::missing_errors_doc
+)]
 
 #[cfg(feature = "nightly")]
 use std::alloc::{Alloc, AllocErr, CannotReallocInPlace};
@@ -109,16 +113,16 @@ impl<H> Cap<H> {
 				}
 				if self
 					.limit
-					.compare_and_swap(limit_old, limit, Ordering::Relaxed)
-					!= limit_old
+					.compare_exchange(limit_old, limit, Ordering::Relaxed, Ordering::Relaxed)
+					.is_err()
 				{
 					continue;
 				}
 			} else {
 				if self
 					.limit
-					.compare_and_swap(limit_old, limit, Ordering::Relaxed)
-					!= limit_old
+					.compare_exchange(limit_old, limit, Ordering::Relaxed, Ordering::Relaxed)
+					.is_err()
 				{
 					continue;
 				}
@@ -157,13 +161,18 @@ impl<H> Cap<H> {
 
 	fn update_stats(&self, size: usize) {
 		#[cfg(feature = "stats")]
-		let _ = self.total_allocated.fetch_add(size, Ordering::Relaxed);
-		// If max_allocated is less than currently allocated, then it will be updated to limit - remaining.
-		// Otherwise, it will remain unchanged.
-		#[cfg(feature = "stats")]
-		let _ = self
-			.max_allocated
-			.fetch_max(self.allocated(), Ordering::Relaxed);
+		{
+			let _ = self.total_allocated.fetch_add(size, Ordering::Relaxed);
+			// If max_allocated is less than currently allocated, then it will be updated to limit - remaining.
+			// Otherwise, it will remain unchanged.
+			let _ = self
+				.max_allocated
+				.fetch_max(self.allocated(), Ordering::Relaxed);
+		}
+		#[cfg(not(feature = "stats"))]
+		{
+			let _ = (self, size);
+		}
 	}
 }
 
@@ -422,15 +431,16 @@ mod tests {
 	#[cfg(all(test, not(feature = "nightly")))]
 	#[test]
 	fn limit() {
+		#[cfg(feature = "stats")]
 		let initial = A.allocated();
 		let allocate_amount = 30 * 1024 * 1024;
 		A.set_limit(A.allocated() + allocate_amount).unwrap();
 		for _ in 0..10 {
 			let mut vec = Vec::<u8>::with_capacity(0);
-			if let Err(e) = vec.try_reserve_exact(allocate_amount + 1) {
+			if let Err(_e) = vec.try_reserve_exact(allocate_amount + 1) {
 			} else {
 				A.set_limit(usize::max_value()).unwrap();
-				panic!("{}", A.remaining())
+				panic!("{}", A.remaining());
 			};
 			assert_eq!(vec.try_reserve_exact(allocate_amount), Ok(()));
 			let mut vec2 = Vec::<u8>::with_capacity(0);
@@ -438,9 +448,10 @@ mod tests {
 		}
 		// Might have additional allocations of errors and what not along the way.
 		#[cfg(feature = "stats")]
-		assert!(A.total_allocated() >= initial + 10 * allocate_amount);
-		#[cfg(feature = "stats")]
-		assert_eq!(A.max_allocated(), initial + allocate_amount)
+		{
+			assert!(A.total_allocated() >= initial + 10 * allocate_amount);
+			assert_eq!(A.max_allocated(), initial + allocate_amount);
+		}
 	}
 
 	#[cfg(all(test, feature = "nightly"))]
